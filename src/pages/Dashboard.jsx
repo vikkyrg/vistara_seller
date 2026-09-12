@@ -569,10 +569,6 @@ function StatCard({ icon, title, value, growth, color, subtitle, delay }) {
                 {icon}
               </div>
             </div>
-            <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${growthColor} bg-opacity-10 flex items-center gap-1 flex-shrink-0`}>
-              <GrowthIcon className="text-xs sm:text-sm" />
-              <span className="text-xs sm:text-sm font-bold">{growth}%</span>
-            </div>
           </div>
           
           <div className="space-y-1">

@@ -1,5 +1,4 @@
 import { motion, AnimatePresence } from "framer-motion";
-import vistaraa from "../../assets/icons/Vistaraa-icon.png";
 import { 
   FiUser, FiSearch, FiChevronDown,
   FiLogOut, FiX, 
@@ -63,9 +62,9 @@ export default function Navbar() {
           <div className="flex items-center flex-1 gap-6">
             
             {/* BRAND (Desktop) */}
-            <div className="hidden md:flex items-center gap-2 shrink-0">
-              <img src={vistaraa} alt="Logo" className="w-8 h-8 object-contain" />
-              <span className="font-bold text-lg text-gray-800 dark:text-white tracking-tight">
+            <div className="hidden md:flex items-center gap-3 shrink-0">
+              <img src="/icon.png" alt="Logo" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
+              <span className="font-bold text-xl text-gray-900 dark:text-white tracking-tight">
                 Vistaraa
               </span>
             </div>
@@ -73,19 +72,19 @@ export default function Navbar() {
             {/* SEARCH (Desktop) */}
             <div className="hidden md:flex w-full max-w-xl">
               <div className="relative w-full group">
-                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
+                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 group-focus-within:text-purple-600 dark:group-focus-within:text-purple-400 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search orders, products..."
-                  className="w-full pl-11 pr-4 py-2 bg-gray-100 dark:bg-gray-800/50 border border-transparent focus:border-purple-500/50 focus:bg-white dark:focus:bg-gray-800 rounded-2xl outline-none transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 rounded-xl outline-none transition-all text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* BRAND (Mobile) */}
-            <div className="md:hidden flex items-center ml-12">
-              <img src={vistaraa} alt="Logo" className="w-7 h-7 object-contain mr-2" />
-              <span className="font-bold text-base text-gray-800 dark:text-white">
+            <div className="md:hidden flex items-center ml-12 gap-2">
+              <img src="/icon.png" alt="Logo" className="w-7 h-7 object-contain" />
+              <span className="font-bold text-lg text-gray-900 dark:text-white">
                 Vistaraa
               </span>
             </div>

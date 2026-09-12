@@ -5,7 +5,7 @@ import {
   FiPackage, FiAlertTriangle, FiClock, FiCheckCircle,
   FiLayers, FiGlobe, FiDollarSign, FiTrash2, FiBox, FiActivity
 } from "react-icons/fi";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +26,19 @@ export default function Products() {
     };
     fetchProducts();
   }, []);
+
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+      try {
+        await deleteDoc(doc(db, "products", productId));
+        setProducts(products.filter(p => p.id !== productId));
+        setSelectedProduct(null);
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Failed to delete product. Please try again.");
+      }
+    }
+  };
 
   const getProductImage = (product) => {
     if (!product?.images?.length) return "https://via.placeholder.com/400";
@@ -130,6 +143,11 @@ export default function Products() {
                     <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 shadow-sm ${status.color}`}>
                       <status.icon /> {status.label}
                     </div>
+                    {product.status === 'pending' && (
+                      <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 shadow-sm bg-amber-100 text-amber-600">
+                        PENDING
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6">
@@ -316,7 +334,10 @@ export default function Products() {
                   >
                     <FiEdit2 /> Edit Full Details
                   </button>
-                  <button className="p-4 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-colors">
+                  <button 
+                    onClick={() => handleDeleteProduct(selectedProduct.id)}
+                    className="p-4 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-colors"
+                  >
                     <FiTrash2 size={20} />
                   </button>
                 </div>

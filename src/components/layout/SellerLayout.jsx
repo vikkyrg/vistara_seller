@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import SellerNotificationListener from "../SellerNotificationListener";
 
 export default function SellerLayout() {
   return (
@@ -21,6 +22,7 @@ export default function SellerLayout() {
         </main>
 
       </div>
+      <SellerNotificationListener />
     </div>
   );
 }

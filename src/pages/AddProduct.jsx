@@ -301,7 +301,8 @@ export default function AddProduct() {
         // Additional
         tags: [],
         attributes: [],
-        specifications: {}
+        specifications: {},
+        status: "pending"
       };
 
       // Add product to Firestore

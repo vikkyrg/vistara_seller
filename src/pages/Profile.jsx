@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   FiUser, FiMail, FiPhone, FiMapPin,
-  FiCamera,
+  FiCamera, FiBriefcase, FiCreditCard,
   FiSave, FiGlobe as
     FiMoon, FiSun,
 } from "react-icons/fi";
@@ -26,11 +26,18 @@ export default function Profile() {
     lastName: "",
     email: "",
     phone: "",
+    businessName: "",
+    businessType: "",
+    gst: "",
+    bankAccount: "",
+    panNumber: "",
+    panCardUrl: "",
+    gstCertificateUrl: "",
+    bankProofUrl: "",
     address: "",
     city: "",
     state: "",
     pincode: "",
-
   });
 
 
@@ -53,6 +60,14 @@ export default function Profile() {
             lastName: data.lastName || "",
             email: data.email || "",
             phone: data.phone || "",
+            businessName: data.businessName || "",
+            businessType: data.businessType || "",
+            gst: data.gst || data.gstNumber || "",
+            bankAccount: data.bankAccount || "",
+            panNumber: data.panNumber || "",
+            panCardUrl: data.panCardUrl || "",
+            gstCertificateUrl: data.gstCertificateUrl || "",
+            bankProofUrl: data.bankProofUrl || "",
             address: data.address || "",
             city: data.city || "",
             state: data.state || "",
@@ -354,6 +369,11 @@ export default function Profile() {
                         { label: "Last Name", name: "lastName", icon: <FiUser /> },
                         { label: "Email", name: "email", icon: <FiMail />, type: "email", disabled: true },
                         { label: "Phone", name: "phone", icon: <FiPhone />, type: "tel" },
+                        { label: "Business Name", name: "businessName", icon: <FiBriefcase /> },
+                        { label: "Business Type", name: "businessType", icon: <FiBriefcase /> },
+                        { label: "GST Number", name: "gst", icon: <FiBriefcase /> },
+                        { label: "PAN Number", name: "panNumber", icon: <FiBriefcase /> },
+                        { label: "Bank Account", name: "bankAccount", icon: <FiCreditCard /> },
                         { label: "City", name: "city", icon: <FiMapPin /> },
                         { label: "State", name: "state", icon: <FiMapPin /> },
                         { label: "Pincode", name: "pincode", icon: <FiMapPin />, type: "number" },
@@ -404,6 +424,33 @@ export default function Profile() {
                           } ${darkMode ? 'bg-gray-900 text-white' : ''}`}
                       />
                     </motion.div>
+
+                    {/* Documents Section */}
+                    <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+                      <h4 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                        Uploaded Documents
+                      </h4>
+                      <div className="flex flex-wrap gap-4">
+                        {form.panCardUrl && (
+                          <a href={form.panCardUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors flex items-center gap-2">
+                            View PAN Card
+                          </a>
+                        )}
+                        {form.gstCertificateUrl && (
+                          <a href={form.gstCertificateUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-100 transition-colors flex items-center gap-2">
+                            View GST Certificate
+                          </a>
+                        )}
+                        {form.bankProofUrl && (
+                          <a href={form.bankProofUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors flex items-center gap-2">
+                            View Bank Proof
+                          </a>
+                        )}
+                        {!form.panCardUrl && !form.gstCertificateUrl && !form.bankProofUrl && (
+                          <p className="text-sm text-gray-500">No documents uploaded yet.</p>
+                        )}
+                      </div>
+                    </div>
 
                     {editMode && (
                       <motion.div

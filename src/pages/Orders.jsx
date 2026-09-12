@@ -412,9 +412,6 @@ export default function Orders() {
                 <div className={`p-2 md:p-3 rounded-lg md:rounded-xl ${stat.bg} ${stat.color} text-lg md:text-xl`}>
                   {stat.icon}
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                  {stat.change}
-                </span>
               </div>
               <div className="mt-3 md:mt-4">
                 <p className="text-[10px] md:text-xs uppercase font-black text-slate-400 tracking-widest">

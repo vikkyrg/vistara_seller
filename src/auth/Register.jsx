@@ -30,9 +30,20 @@ export default function Register() {
 
   const nextStep = () => {
     // Validate current step before proceeding
-    if (step === 1 && (!form.firstName || !form.lastName || !form.email || !form.phone)) {
-      setError("Please fill all personal details");
-      return;
+    if (step === 1) {
+      if (!form.firstName || !form.lastName || !form.email || !form.phone) {
+        setError("Please fill all personal details");
+        return;
+      }
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(form.email)) {
+        setError("Please enter a valid email address (e.g., yourname@gmail.com)");
+        return;
+      }
+      if (form.phone.length !== 10) {
+        setError("Please enter exactly 10 digits for your phone number");
+        return;
+      }
     }
     if (step === 2 && (!form.businessName || !form.businessType)) {
       setError("Please fill all business details");
@@ -52,7 +63,11 @@ export default function Register() {
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+    if (name === "phone") {
+      value = value.replace(/\D/g, '').slice(0, 10);
+    }
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = async (e) => {
