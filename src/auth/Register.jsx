@@ -24,7 +24,7 @@ export default function Register() {
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", phone: "",
     businessName: "", businessType: "", gst: "",
-    address: "", city: "", state: "", pincode: "",
+    doorNo: "", street: "", landmark: "", district: "", state: "", pincode: "",
     password: "", confirmPassword: "",
   });
 
@@ -49,8 +49,8 @@ export default function Register() {
       setError("Please fill all business details");
       return;
     }
-    if (step === 3 && (!form.address || !form.city || !form.state || !form.pincode)) {
-      setError("Please fill all address details");
+    if (step === 3 && (!form.doorNo || !form.street || !form.district || !form.state || !form.pincode)) {
+      setError("Please fill all required address details");
       return;
     }
     setError("");
@@ -308,21 +308,40 @@ export default function Register() {
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <FiMapPin className="text-green-400" /> Address Details
                 </h2>
-                <textarea 
-                  name="address" 
-                  value={form.address}
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <input 
+                    name="doorNo" 
+                    value={form.doorNo}
+                    onChange={handleChange} 
+                    placeholder="Door No. / Building Name *" 
+                    className="vist-input" 
+                    required
+                  />
+                  <input 
+                    name="street" 
+                    value={form.street}
+                    onChange={handleChange} 
+                    placeholder="Area / Street Name *" 
+                    className="vist-input" 
+                    required
+                  />
+                </div>
+                
+                <input 
+                  name="landmark" 
+                  value={form.landmark}
                   onChange={handleChange} 
-                  placeholder="Full Business Address *" 
-                  className="vist-input h-24 resize-none" 
-                  rows={4}
-                  required
+                  placeholder="Landmark (Optional)" 
+                  className="vist-input" 
                 />
+                
                 <div className="grid md:grid-cols-3 gap-4">
                   <input 
-                    name="city" 
-                    value={form.city}
+                    name="district" 
+                    value={form.district}
                     onChange={handleChange} 
-                    placeholder="City *" 
+                    placeholder="District / City *" 
                     className="vist-input" 
                     required
                   />
