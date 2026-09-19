@@ -48,6 +48,7 @@ export default function AddProduct() {
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
   const [variants, setVariants] = useState([]);
+  const [productDeclarationAccepted, setProductDeclarationAccepted] = useState(false);
 
   // ✅ AUTO SELLER ID
   useEffect(() => {
@@ -201,6 +202,11 @@ export default function AddProduct() {
     }
 
     // Validation
+    if (!productDeclarationAccepted) {
+      setError("Product authorization declaration is mandatory. Please check the declaration before publishing.");
+      return;
+    }
+
     if (!form.name.trim()) {
       setError("Product name is required");
       return;
@@ -291,6 +297,10 @@ export default function AddProduct() {
         sales: 0,
         rating: 0,
         reviewsCount: 0,
+        // Product-Level Legal Declaration
+        productDeclarationAccepted: true,
+        productDeclarationText: "I confirm that I am authorized to sell this product and that the product information, images, price, stock and other details provided by me are accurate.",
+        productDeclarationAcceptedAt: Timestamp.now(),
         // SEO
         slug: form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-'),
         metaTitle: form.name.trim(),
@@ -298,11 +308,9 @@ export default function AddProduct() {
         // Inventory
         lowStockThreshold: 10,
         trackInventory: true,
-        // Additional
         tags: [],
         attributes: [],
-        specifications: {},
-        status: "pending"
+        specifications: {}
       };
 
       // Add product to Firestore
@@ -856,6 +864,23 @@ export default function AddProduct() {
               )}
             </motion.div>
           </AnimatePresence>
+        </div>
+
+        {/* PRODUCT AUTHORIZATION & ACCURACY DECLARATION */}
+        <div className="mt-8 bg-purple-50/70 border border-purple-200 p-5 rounded-2xl">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="productDecl"
+              checked={productDeclarationAccepted}
+              onChange={(e) => setProductDeclarationAccepted(e.target.checked)}
+              className="mt-1 h-5 w-5 text-purple-600 rounded border-purple-300 focus:ring-purple-500 cursor-pointer"
+            />
+            <label htmlFor="productDecl" className="text-xs md:text-sm text-slate-700 leading-relaxed cursor-pointer font-medium">
+              <span className="font-bold text-purple-900 block mb-1">Product Authorization & Accuracy Declaration:</span>
+              “I confirm that I am authorized to sell this product and that the product information, images, price, stock and other details provided by me are accurate.”
+            </label>
+          </div>
         </div>
 
         {/* FOOTER ACTIONS */}

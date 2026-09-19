@@ -26,7 +26,9 @@ export default function SellerDocuments() {
   const [formData, setFormData] = useState({
     bankAccount: "",
     gstNumber: "",
-    panNumber: ""
+    panNumber: "",
+    panName: "",
+    isPanExempt: false
   });
 
   const [files, setFiles] = useState({
@@ -65,7 +67,9 @@ export default function SellerDocuments() {
             ...prev,
             bankAccount: data.bankAccount || "",
             gstNumber: data.gstNumber || data.gst || "",
-            panNumber: data.panNumber || ""
+            panNumber: data.panNumber || "",
+            panName: data.panName || `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.businessName || "",
+            isPanExempt: data.isPanExempt || false
           }));
           
           // Check if documents are already uploaded
@@ -268,7 +272,11 @@ export default function SellerDocuments() {
         // Store form data
         bankAccount: formData.bankAccount,
         gstNumber: formData.gstNumber,
-        panNumber: formData.panNumber
+        panNumber: formData.panNumber,
+        panName: formData.panName,
+        isPanExempt: formData.isPanExempt || false,
+        panVerificationStatus: formData.isPanExempt ? "exempt" : "pending_verification",
+        panSubmittedAt: new Date().toISOString()
       };
 
       // Add identity document info
@@ -347,19 +355,20 @@ export default function SellerDocuments() {
 
       // Update seller status with all the new fields
       await updateDoc(doc(db, "sellers", uid), {
-        // New fields
         bankAccount: formData.bankAccount,
         bankProofUrl: documentData.bankProofUrl || null,
         gstCertificateUrl: documentData.gstCertificateUrl || null,
         gstNumber: formData.gstNumber,
         panCardUrl: documentData.panCardUrl || null,
         panNumber: formData.panNumber,
-        // Existing fields
+        panName: formData.panName,
+        isPanExempt: formData.isPanExempt || false,
+        panVerificationStatus: formData.isPanExempt ? "exempt" : "pending_verification",
+        panSubmittedAt: new Date().toISOString(),
         documentsSubmitted: true,
         documentStatus: "under_review",
         lastUpdated: new Date().toISOString(),
         verificationStep: "documents_submitted",
-        // Update existing gst field if not already set
         gst: formData.gstNumber || userData?.gst || ""
       });
 
@@ -488,7 +497,7 @@ export default function SellerDocuments() {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-xl text-gray-800">PAN Card Details</h3>
-                        <p className="text-gray-600 mt-1">Enter your PAN number and upload PAN card</p>
+                        <p className="text-gray-600 mt-1">Enter your PAN details and upload PAN card document</p>
                       </div>
                       <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
                         Required
@@ -497,8 +506,24 @@ export default function SellerDocuments() {
                   </div>
                 </div>
 
+                {/* Seller/Business Name as per PAN */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Seller / Business Name as per PAN *
+                  </label>
+                  <input
+                    type="text"
+                    name="panName"
+                    value={formData.panName}
+                    onChange={handleInputChange}
+                    placeholder="Full Name / Entity Name as printed on PAN"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Must exactly match the name on your PAN card</p>
+                </div>
+
                 {/* PAN Number Input */}
-                <div className="mb-6">
+                <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     PAN Number *
                   </label>
@@ -508,11 +533,26 @@ export default function SellerDocuments() {
                     value={formData.panNumber}
                     onChange={handleInputChange}
                     placeholder="Enter your PAN number (e.g., ABCDE1234F)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all uppercase"
                     pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
                     title="Please enter a valid PAN number (e.g., ABCDE1234F)"
+                    disabled={formData.isPanExempt}
                   />
                   <p className="text-xs text-gray-500 mt-1">Format: ABCDE1234F (5 letters, 4 digits, 1 letter)</p>
+                </div>
+
+                {/* Flexible Applicability Toggle */}
+                <div className="mb-6 p-3 bg-blue-50/50 border border-blue-100 rounded-lg flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isPanExempt"
+                    checked={formData.isPanExempt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isPanExempt: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <label htmlFor="isPanExempt" className="text-xs text-gray-700 cursor-pointer">
+                    <strong>Exempt Entity Category:</strong> This seller entity is legally exempt from PAN/GST requirement under applicable tax law.
+                  </label>
                 </div>
 
                 {/* PAN Card Upload */}
