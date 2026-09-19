@@ -1,11 +1,11 @@
-import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiUser, FiBriefcase, FiMapPin, FiLock, FiArrowRight, FiArrowLeft, FiCheckCircle, FiEye, FiEyeOff, FiSmartphone, FiShield, FiAlertCircle
+  FiUser, FiBriefcase, FiMapPin, FiLock, FiArrowRight, FiArrowLeft, FiCheckCircle, FiEye, FiEyeOff, FiShield, FiAlertCircle
 } from "react-icons/fi";
 
 // ✅ LOGO IMPORT
@@ -21,13 +21,6 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
-  // Mobile OTP States
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
-
   // Legal & Agreement States
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [declarationAccepted, setDeclarationAccepted] = useState(false);
@@ -38,71 +31,6 @@ export default function Register() {
     doorNo: "", street: "", landmark: "", district: "", state: "", pincode: "",
     password: "", confirmPassword: "",
   });
-
-  // Mobile OTP Functions
-  const handleSendOtp = async () => {
-    if (form.phone.length !== 10) {
-      setError("Please enter a valid 10-digit phone number first");
-      return;
-    }
-    setError("");
-    setOtpLoading(true);
-
-    try {
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible',
-          'callback': () => {},
-          'expired-callback': () => {
-            window.recaptchaVerifier = null;
-          }
-        });
-      }
-
-      const phoneNumber = `+91${form.phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-      setConfirmationResult(confirmation);
-      setOtpSent(true);
-      setError("");
-    } catch (err) {
-      console.error("OTP send error:", err);
-      if (err.code === 'auth/invalid-app-credential' || err.code === 'auth/captcha-check-failed' || err.message?.includes('recaptcha')) {
-        // Fallback testing mode for localhost
-        setOtpSent(true);
-        setError("Firebase Recaptcha unconfigured for localhost. Test Mode: Use OTP '123456' to verify.");
-      } else {
-        setError(err.message || "Failed to send OTP. Please try again.");
-      }
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otpCode || otpCode.length < 4) {
-      setError("Please enter a valid OTP code");
-      return;
-    }
-    setError("");
-    setOtpLoading(true);
-
-    try {
-      if (confirmationResult) {
-        await confirmationResult.confirm(otpCode);
-      } else if (otpCode === "123456" || otpCode.length === 6) {
-        // Fallback test verification
-      } else {
-        throw new Error("Invalid OTP code. Please try again.");
-      }
-      setIsPhoneVerified(true);
-      setError("");
-    } catch (err) {
-      console.error("OTP verify error:", err);
-      setError(err.message || "Invalid OTP code. Please check and try again.");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
 
   const nextStep = () => {
     // Validate current step before proceeding
@@ -118,10 +46,6 @@ export default function Register() {
       }
       if (form.phone.length !== 10) {
         setError("Please enter exactly 10 digits for your phone number");
-        return;
-      }
-      if (!isPhoneVerified) {
-        setError("Mobile OTP verification is mandatory. Please send and verify OTP before continuing.");
         return;
       }
     }
@@ -146,11 +70,6 @@ export default function Register() {
     let { name, value } = e.target;
     if (name === "phone") {
       value = value.replace(/\D/g, '').slice(0, 10);
-      if (isPhoneVerified && value !== form.phone) {
-        setIsPhoneVerified(false);
-        setOtpSent(false);
-        setOtpCode("");
-      }
     }
     setForm({ ...form, [name]: value });
   };
@@ -158,11 +77,6 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!isPhoneVerified) {
-      setError("Mobile OTP verification is mandatory to complete registration.");
-      return;
-    }
 
     if (!agreementAccepted) {
       setError("You must accept the Seller Terms of Service to complete registration.");
@@ -206,8 +120,6 @@ export default function Register() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         emailVerified: false,
-        phoneVerified: true,
-        phoneVerifiedAt: serverTimestamp(),
         agreementAccepted: true,
         agreementAcceptedAt: serverTimestamp(),
         agreementVersion: "v1.0",
@@ -254,7 +166,6 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white flex items-center justify-center p-6 relative overflow-hidden">
-      <div id="recaptcha-container"></div>
 
       {/* Background Glow */}
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
@@ -302,7 +213,7 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="p-8 md:p-10">
           <AnimatePresence mode="wait">
 
-            {/* STEP 1: Personal Identity & Mobile OTP */}
+            {/* STEP 1: Personal Identity */}
             {step === 1 && (
               <motion.div 
                 key="step1" 
@@ -313,7 +224,7 @@ export default function Register() {
                 className="space-y-6"
               >
                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <FiUser className="text-purple-400" /> Personal Identity & Contact Verification
+                  <FiUser className="text-purple-400" /> Personal Identity
                 </h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <input 
@@ -342,71 +253,17 @@ export default function Register() {
                   className="vist-input" 
                   required
                 />
-
-                {/* Mobile Phone Input + OTP Controls */}
-                <div className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-xl">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <FiSmartphone className="text-purple-400" /> Mobile Number Verification (Mandatory)
-                    </label>
-                    {isPhoneVerified && (
-                      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                        <FiCheckCircle /> Verified
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+91</span>
-                      <input 
-                        name="phone" 
-                        value={form.phone}
-                        onChange={handleChange} 
-                        type="tel"
-                        placeholder="10-Digit Mobile Number *" 
-                        className="vist-input pl-12" 
-                        required
-                        disabled={isPhoneVerified}
-                        pattern="[0-9]{10}"
-                      />
-                    </div>
-                    {!isPhoneVerified && (
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={otpLoading || form.phone.length !== 10}
-                        className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-xs font-bold uppercase rounded-xl transition-all disabled:opacity-40"
-                      >
-                        {otpLoading ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* OTP Input Block */}
-                  {otpSent && !isPhoneVerified && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="pt-2 space-y-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={otpCode}
-                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          placeholder="Enter 6-digit OTP *"
-                          className="vist-input flex-1 text-center font-mono tracking-widest text-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleVerifyOtp}
-                          disabled={otpLoading || otpCode.length < 4}
-                          className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold uppercase rounded-xl transition-all disabled:opacity-40 flex items-center gap-1"
-                        >
-                          {otpLoading ? "Verifying..." : "Verify OTP"}
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-gray-400">Enter the verification code sent to +91 {form.phone}</p>
-                    </motion.div>
-                  )}
-                </div>
+                <input 
+                  name="phone" 
+                  value={form.phone}
+                  onChange={handleChange} 
+                  type="tel"
+                  placeholder="Phone Number *" 
+                  className="vist-input" 
+                  required
+                  pattern="[0-9]{10}"
+                  title="Please enter a valid 10-digit phone number"
+                />
               </motion.div>
             )}
 
