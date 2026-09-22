@@ -6,7 +6,6 @@ import {
   FiPackage,
   FiChevronRight,
   FiTrendingUp,
-  FiTrendingDown,
   FiCalendar,
   FiClock,
   FiArrowUpRight,
@@ -30,11 +29,7 @@ export default function Dashboard() {
     totalSales: 0,
     totalOrders: 0,
     totalProducts: 0,
-    totalUsers: 0,
-    salesGrowth: 12.5,
-    orderGrowth: 8.2,
-    userGrowth: 5.7,
-    productGrowth: 3.4
+    totalUsers: 0
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('today');
@@ -110,10 +105,6 @@ export default function Dashboard() {
           totalOrders: orders.length,
           totalProducts: productsSnap.size,
           totalUsers: uniqueCustomers.size,
-          salesGrowth: 12.5,
-          orderGrowth: recentOrdersThisWeek.length > 0 ? Math.round((recentOrdersThisWeek.length / orders.length) * 100) : 0,
-          userGrowth: 5.7,
-          productGrowth: 3.4,
           weekOrders: recentOrdersThisWeek.length,
           monthOrders: recentOrdersThisMonth.length
         });
@@ -251,7 +242,6 @@ export default function Dashboard() {
             icon={<FiDollarSign size={24} />}
             title="Total Sales"
             value={formatCurrency(stats.totalSales)}
-            growth={stats.salesGrowth}
             color="from-green-500 to-emerald-500"
             subtitle="Revenue generated"
             delay={0}
@@ -260,7 +250,6 @@ export default function Dashboard() {
             icon={<FiShoppingBag size={24} />}
             title="Total Orders"
             value={stats.totalOrders}
-            growth={stats.orderGrowth}
             color="from-blue-500 to-cyan-500"
             subtitle="Orders placed"
             delay={0.1}
@@ -269,7 +258,6 @@ export default function Dashboard() {
             icon={<FiPackage size={24} />}
             title="Products"
             value={stats.totalProducts}
-            growth={stats.productGrowth}
             color="from-purple-500 to-pink-500"
             subtitle="Active listings"
             delay={0.2}
@@ -278,7 +266,6 @@ export default function Dashboard() {
             icon={<FiUsers size={24} />}
             title="Customers"
             value={stats.totalUsers}
-            growth={stats.userGrowth}
             color="from-orange-500 to-amber-500"
             subtitle="Total buyers"
             delay={0.3}
@@ -474,19 +461,11 @@ export default function Dashboard() {
                     {formatCurrency(stats.totalSales / Math.max(stats.totalOrders, 1))}
                   </div>
                 </div>
-                <div className="text-xs sm:text-sm font-bold text-green-600 flex items-center gap-1">
-                  <FiTrendingUp className="text-xs sm:text-sm" />
-                  +12.5%
-                </div>
               </div>
               <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50">
                 <div>
                   <div className="text-xs sm:text-sm text-gray-600">This Week Orders</div>
                   <div className="text-lg sm:text-xl font-bold text-gray-800">{stats.weekOrders || 0}</div>
-                </div>
-                <div className="text-xs sm:text-sm font-bold text-blue-600 flex items-center gap-1">
-                  <FiTrendingUp className="text-xs sm:text-sm" />
-                  +{stats.orderGrowth || 0}%
                 </div>
               </div>
               <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50">
@@ -495,10 +474,6 @@ export default function Dashboard() {
                   <div className="text-lg sm:text-xl font-bold text-gray-800">
                     {Math.round((stats.totalOrders / Math.max(stats.totalUsers, 1)) * 100)}%
                   </div>
-                </div>
-                <div className="text-xs sm:text-sm font-bold text-purple-600 flex items-center gap-1">
-                  <FiTrendingUp className="text-xs sm:text-sm" />
-                  +5.3%
                 </div>
               </div>
             </div>
@@ -546,10 +521,7 @@ export default function Dashboard() {
 }
 
 /* ================= ENHANCED STAT CARD ================= */
-function StatCard({ icon, title, value, growth, color, subtitle, delay }) {
-  const GrowthIcon = growth >= 0 ? FiTrendingUp : FiTrendingDown;
-  const growthColor = growth >= 0 ? "text-green-600" : "text-red-600";
-
+function StatCard({ icon, title, value, color, subtitle, delay }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -579,21 +551,6 @@ function StatCard({ icon, title, value, growth, color, subtitle, delay }) {
             )}
           </div>
           
-          {/* Progress bar */}
-          <div className="mt-4 sm:mt-6">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>Target</span>
-              <span>{Math.round(growth + 100)}%</span>
-            </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(growth + 50, 100)}%` }}
-                transition={{ duration: 1, delay: delay + 0.3 }}
-                className={`h-full bg-gradient-to-r ${color} rounded-full`}
-              />
-            </div>
-          </div>
         </div>
       </div>
     </motion.div>
