@@ -58,7 +58,7 @@ export default function Products() {
   );
 
   // --- DYNAMIC STATS CALCULATION ---
-  const totalStockValue = products.reduce((acc, curr) => acc + (Number(curr.price || 0) * Number(curr.stock || 0)), 0);
+  const totalStockValue = products.reduce((acc, curr) => acc + (Number(curr.sellerPrice || curr.price || 0) * Number(curr.stock || 0)), 0);
   const lowStockCount = products.filter(p => Number(p.stock) > 0 && Number(p.stock) <= 10).length;
   const outOfStockCount = products.filter(p => Number(p.stock) <= 0).length;
 
@@ -160,9 +160,9 @@ export default function Products() {
                       <div>
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-tighter">Current Price</p>
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl font-black text-slate-900">₹{product.salePrice || product.price}</span>
-                          {product.salePrice < product.price && (
-                            <span className="text-sm text-slate-400 line-through font-bold">₹{product.price}</span>
+                          <span className="text-2xl font-black text-slate-900">₹{product.sellerSalePrice || product.salePrice || product.sellerPrice || product.price}</span>
+                          {(product.sellerSalePrice || product.salePrice) < (product.sellerPrice || product.price) && (
+                            <span className="text-sm text-slate-400 line-through font-bold">₹{product.sellerPrice || product.price}</span>
                           )}
                         </div>
                       </div>
@@ -255,7 +255,7 @@ export default function Products() {
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Sale Price</p>
-                    <p className="text-2xl font-black text-slate-900">₹{selectedProduct.salePrice || 0}</p>
+                    <p className="text-2xl font-black text-slate-900">₹{selectedProduct.sellerSalePrice || selectedProduct.salePrice || 0}</p>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Stock</p>
@@ -294,7 +294,7 @@ export default function Products() {
                             <span className="text-[10px] font-bold text-slate-400 uppercase">SKU: {v.sku}</span>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs font-black text-slate-900">₹{v.price}</p>
+                            <p className="text-xs font-black text-slate-900">₹{v.sellerPrice || v.price}</p>
                             <p className="text-[10px] font-bold text-emerald-600">{v.stock} pcs</p>
                           </div>
                         </div>

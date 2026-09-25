@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiPackage, FiTag, FiImage, FiLayers, FiUploadCloud, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiChevronRight, FiInfo } from "react-icons/fi";
+import { FiPackage, FiTag, FiImage, FiLayers, FiUploadCloud, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiChevronRight, FiInfo, FiList } from "react-icons/fi";
 import { auth, db } from "../config/firebase";
 import { collection, addDoc, Timestamp, getDocs, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { uploadToS3 } from "../utils/s3Upload";
 import { motion, AnimatePresence } from "framer-motion";
+import { getRecommendedSpecs } from "../data/categorySpecs";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -48,6 +49,8 @@ export default function AddProduct() {
   const [images, setImages] = useState([]);
   const [preview, setPreview] = useState([]);
   const [variants, setVariants] = useState([]);
+  const [highlights, setHighlights] = useState([""]);
+  const [specifications, setSpecifications] = useState([]);
   const [productDeclarationAccepted, setProductDeclarationAccepted] = useState(false);
 
   // ✅ AUTO SELLER ID
@@ -140,6 +143,83 @@ export default function AddProduct() {
 
     fetchSubunder();
   }, [form.subcategory]);
+
+  // 🔥 4. AUTO LOAD RECOMMENDED SPECS ON CATEGORY CHANGE
+  useEffect(() => {
+    if (form.category) {
+      const catObj = categories.find(c => c.id === form.category);
+      const subObj = subcategories.find(s => s.id === form.subcategory);
+      const catName = catObj ? catObj.name : "";
+      const subName = subObj ? subObj.name : "";
+
+      const recs = getRecommendedSpecs(catName, subName);
+
+      setSpecifications(prevSpecs => {
+        const existingMap = new Map();
+        prevSpecs.forEach(s => {
+          if (s.name.trim()) {
+            existingMap.set(s.name.trim().toLowerCase(), s);
+          }
+        });
+
+        const newSpecs = [...prevSpecs];
+        recs.forEach(rec => {
+          if (!existingMap.has(rec.toLowerCase())) {
+            newSpecs.push({ name: rec, value: "" });
+            existingMap.set(rec.toLowerCase(), { name: rec, value: "" });
+          }
+        });
+        return newSpecs;
+      });
+    }
+  }, [form.category, form.subcategory, categories, subcategories]);
+
+  // Highlights handlers
+  const addHighlight = () => {
+    if (highlights.length >= 6) return;
+    setHighlights([...highlights, ""]);
+  };
+
+  const updateHighlight = (index, val) => {
+    const updated = [...highlights];
+    updated[index] = val.slice(0, 150);
+    setHighlights(updated);
+  };
+
+  const removeHighlight = (index) => {
+    setHighlights(highlights.filter((_, i) => i !== index));
+  };
+
+  // Specifications handlers
+  const addSpecification = (name = "", value = "") => {
+    if (name.trim()) {
+      const exists = specifications.some(s => s.name.trim().toLowerCase() === name.trim().toLowerCase());
+      if (exists) {
+        setError(`Specification "${name}" already exists.`);
+        return;
+      }
+    }
+    setSpecifications(prev => [...prev, { name, value }]);
+    setError("");
+  };
+
+  const updateSpecification = (index, field, value) => {
+    const updated = [...specifications];
+    if (field === "name" && value.trim()) {
+      const isDuplicate = updated.some((s, i) => i !== index && s.name.trim().toLowerCase() === value.trim().toLowerCase());
+      if (isDuplicate) {
+        setError(`Specification "${value}" already exists.`);
+      } else {
+        setError("");
+      }
+    }
+    updated[index][field] = value;
+    setSpecifications(updated);
+  };
+
+  const removeSpecification = (index) => {
+    setSpecifications(specifications.filter((_, i) => i !== index));
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -310,7 +390,10 @@ export default function AddProduct() {
         trackInventory: true,
         tags: [],
         attributes: [],
-        specifications: {}
+        productHighlights: highlights.filter(h => h.trim()),
+        specifications: specifications
+          .filter(s => s.name.trim())
+          .map(s => ({ name: s.name.trim(), value: s.value.trim() }))
       };
 
       // Add product to Firestore
@@ -340,7 +423,7 @@ export default function AddProduct() {
   const handleMobileBack = () => {
     if (tab !== "basic") {
       // Go to previous tab
-      const tabs = ["basic", "pricing", "category", "media", "variants"];
+      const tabs = ["basic", "pricing", "category", "specifications", "media", "variants"];
       const currentIndex = tabs.indexOf(tab);
       if (currentIndex > 0) {
         setTab(tabs[currentIndex - 1]);
@@ -405,21 +488,21 @@ export default function AddProduct() {
         {isMobile && (
           <div className="mb-4">
             <div className="flex items-center justify-between px-1 mb-2">
-              {["Basic", "Pricing", "Category", "Media", "Variants"].map((step, index) => {
-                const stepValue = ["basic", "pricing", "category", "media", "variants"][index];
+              {["Basic", "Pricing", "Category", "Specs", "Media", "Variants"].map((step, index) => {
+                const stepValue = ["basic", "pricing", "category", "specifications", "media", "variants"][index];
                 const isActive = tab === stepValue;
-                const isCompleted = ["basic", "pricing", "category", "media", "variants"].indexOf(tab) > index;
+                const isCompleted = ["basic", "pricing", "category", "specifications", "media", "variants"].indexOf(tab) > index;
                 
                 return (
                   <div key={step} className="flex flex-col items-center flex-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${
                       isActive || isCompleted 
                         ? 'bg-blue-500 text-white' 
                         : 'bg-slate-200 text-slate-500'
                     }`}>
                       {isCompleted ? "✓" : index + 1}
                     </div>
-                    <span className={`text-[10px] mt-1 text-center ${isActive ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
+                    <span className={`text-[9px] mt-1 text-center truncate w-full ${isActive ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
                       {step}
                     </span>
                   </div>
@@ -430,7 +513,7 @@ export default function AddProduct() {
               <div 
                 className="h-full bg-blue-500 transition-all duration-300"
                 style={{ 
-                  width: `${(["basic", "pricing", "category", "media", "variants"].indexOf(tab) + 1) * 20}%` 
+                  width: `${(["basic", "pricing", "category", "specifications", "media", "variants"].indexOf(tab) + 1) * 16.66}%` 
                 }}
               />
             </div>
@@ -442,6 +525,7 @@ export default function AddProduct() {
           <Tab label="Basic Info" icon={<FiPackage />} active={tab === "basic"} onClick={() => setTab("basic")} />
           <Tab label="Pricing" active={tab === "pricing"} onClick={() => setTab("pricing")} />
           <Tab label="Category" icon={<FiTag />} active={tab === "category"} onClick={() => setTab("category")} />
+          <Tab label="Specifications" icon={<FiList />} active={tab === "specifications"} onClick={() => setTab("specifications")} />
           <Tab label="Media" icon={<FiImage />} active={tab === "media"} onClick={() => setTab("media")} />
           <Tab label="Variants" icon={<FiLayers />} active={tab === "variants"} onClick={() => setTab("variants")} />
         </div>
@@ -457,6 +541,7 @@ export default function AddProduct() {
               <option value="basic">📝 Basic Information</option>
               <option value="pricing">💰 Pricing & Inventory</option>
               <option value="category">🏷️ Category & Brand</option>
+              <option value="specifications">📋 Product Specifications</option>
               <option value="media">🖼️ Product Images</option>
               <option value="variants">🎨 Variants & Options</option>
             </select>
@@ -512,6 +597,50 @@ export default function AddProduct() {
                       />
                       <span className="text-sm font-medium text-slate-700">Featured Product</span>
                     </label>
+                  </div>
+
+                  {/* Key Highlights */}
+                  <div className="mt-6 pt-6 border-t border-slate-100">
+                    <div className="flex justify-between items-center mb-3">
+                      <div>
+                        <label className="text-xs md:text-sm font-semibold text-slate-700 block">
+                          Key Highlights (Optional)
+                        </label>
+                        <p className="text-xs text-slate-400">Add 3–6 short bullet points highlighting key features.</p>
+                      </div>
+                      {highlights.length < 6 && (
+                        <button
+                          type="button"
+                          onClick={addHighlight}
+                          className="flex items-center gap-1 text-xs text-blue-600 font-bold hover:underline"
+                        >
+                          <FiPlus size={14} /> Add Highlight
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {highlights.map((h, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="text-blue-500 font-bold text-sm">✓</span>
+                          <input
+                            type="text"
+                            value={h}
+                            onChange={(e) => updateHighlight(idx, e.target.value)}
+                            placeholder="e.g. Premium cotton fabric / Machine washable"
+                            className="flex-1 border-slate-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                          />
+                          {highlights.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeHighlight(idx)}
+                              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </Card>
               )}
@@ -639,6 +768,113 @@ export default function AddProduct() {
                       />
                     </div>
                   </div>
+                </Card>
+              )}
+
+              {tab === "specifications" && (
+                <Card title="Product Specifications">
+                  <p className="text-xs md:text-sm text-slate-500 -mt-2 mb-6">
+                    Add important details and technical specifications about your product.
+                  </p>
+
+                  {/* Category-Recommended Specifications */}
+                  {form.category && (
+                    <div className="mb-6 p-4 bg-blue-50/60 border border-blue-100 rounded-xl">
+                      <p className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">
+                        Category Recommended Specifications
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {getRecommendedSpecs(
+                          categories.find(c => c.id === form.category)?.name || "",
+                          subcategories.find(s => s.id === form.subcategory)?.name || ""
+                        ).map((recName) => {
+                          const isAdded = specifications.some(s => s.name.trim().toLowerCase() === recName.toLowerCase());
+                          return (
+                            <button
+                              key={recName}
+                              type="button"
+                              disabled={isAdded}
+                              onClick={() => addSpecification(recName, "")}
+                              className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all flex items-center gap-1 ${
+                                isAdded
+                                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                                  : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
+                              }`}
+                            >
+                              {isAdded ? "✓" : "+"} {recName}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Specifications Table */}
+                  {specifications.length === 0 ? (
+                    <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200 mb-6">
+                      <FiList className="mx-auto text-slate-300 mb-2" size={36} />
+                      <p className="text-slate-500 text-sm font-medium">No specifications added yet.</p>
+                      <p className="text-slate-400 text-xs mt-1 mb-4">Add specifications to help customers make an informed purchase.</p>
+                      <button
+                        type="button"
+                        onClick={() => addSpecification("", "")}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition"
+                      >
+                        <FiPlus /> Add Specification
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 mb-6">
+                      <div className="grid grid-cols-12 gap-2 text-xs font-bold text-slate-500 uppercase px-1">
+                        <div className="col-span-5">Specification Name</div>
+                        <div className="col-span-6">Specification Value</div>
+                        <div className="col-span-1 text-center">Action</div>
+                      </div>
+
+                      {specifications.map((spec, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                          <div className="col-span-5">
+                            <input
+                              type="text"
+                              value={spec.name}
+                              onChange={(e) => updateSpecification(idx, "name", e.target.value)}
+                              placeholder="e.g. Brand, Material, RAM"
+                              className="w-full border-slate-200 border p-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="col-span-6">
+                            <input
+                              type="text"
+                              value={spec.value}
+                              onChange={(e) => updateSpecification(idx, "value", e.target.value)}
+                              placeholder="e.g. Cotton, 8GB, Nike"
+                              className="w-full border-slate-200 border p-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="col-span-1 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeSpecification(idx)}
+                              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                              title="Delete Specification"
+                            >
+                              <FiTrash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {specifications.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => addSpecification("", "")}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs md:text-sm rounded-xl transition"
+                    >
+                      <FiPlus /> Add Specification
+                    </button>
+                  )}
                 </Card>
               )}
 
@@ -896,7 +1132,7 @@ export default function AddProduct() {
             {isMobile && tab !== "variants" && (
               <button
                 onClick={() => {
-                  const tabs = ["basic", "pricing", "category", "media", "variants"];
+                  const tabs = ["basic", "pricing", "category", "specifications", "media", "variants"];
                   const currentIndex = tabs.indexOf(tab);
                   if (currentIndex < tabs.length - 1) {
                     setTab(tabs[currentIndex + 1]);
