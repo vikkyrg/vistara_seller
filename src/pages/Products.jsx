@@ -160,9 +160,13 @@ export default function Products() {
                       <div>
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-tighter">Current Price</p>
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl font-black text-slate-900">₹{product.sellerSalePrice || product.salePrice || product.sellerPrice || product.price}</span>
-                          {(product.sellerSalePrice || product.salePrice) < (product.sellerPrice || product.price) && (
-                            <span className="text-sm text-slate-400 line-through font-bold">₹{product.sellerPrice || product.price}</span>
+                          <span className="text-2xl font-black text-slate-900">
+                            ₹{product.sellerSalePrice || product.sellerPrice || product.salePrice || product.price || 0}
+                          </span>
+                          {((product.sellerSalePrice && product.sellerPrice && product.sellerSalePrice < product.sellerPrice) || (!product.sellerPrice && product.salePrice && product.salePrice < product.price)) && (
+                            <span className="text-sm text-slate-400 line-through font-bold">
+                              ₹{product.sellerPrice || product.price}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -254,8 +258,8 @@ export default function Products() {
 
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Sale Price</p>
-                    <p className="text-2xl font-black text-slate-900">₹{selectedProduct.sellerSalePrice || selectedProduct.salePrice || 0}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Base Price / Cost</p>
+                    <p className="text-2xl font-black text-slate-900">₹{selectedProduct.sellerSalePrice || selectedProduct.sellerPrice || selectedProduct.salePrice || selectedProduct.price || 0}</p>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Stock</p>
