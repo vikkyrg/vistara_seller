@@ -457,6 +457,15 @@ export default function EditProduct() {
       const subcategoryName = subcategories.find(s => s.id === form.subcategory)?.name || "";
       const subunderName = subunder.find(s => s.id === form.subunder)?.name || "";
 
+      // Fetch commission rate
+      const commissionDoc = await getDoc(doc(db, "settings", "commission"));
+      const commissionRate = commissionDoc.exists() ? Number(commissionDoc.data().percentage || 0) : 0;
+      
+      const basePrice = parseFloat(form.price) || 0;
+      const baseSalePrice = parseFloat(form.salePrice) ? parseFloat(form.salePrice) : basePrice;
+      const finalPrice = basePrice + (basePrice * commissionRate / 100);
+      const finalSalePrice = baseSalePrice + (baseSalePrice * commissionRate / 100);
+
       // Update product data
       const updatedProductData = {
         name: form.name.trim(),
@@ -469,13 +478,23 @@ export default function EditProduct() {
         subunderName,
         brand: form.brand.trim() || null,
         sku: form.sku.trim(),
-        price: parseFloat(form.price) || 0,
-        salePrice: parseFloat(form.salePrice) || 0,
+        adminCommissionPercentage: commissionRate,
+        sellerPrice: basePrice,
+        sellerSalePrice: baseSalePrice,
+        price: finalPrice,
+        salePrice: finalSalePrice,
         stock: parseInt(form.stock) || 0,
         hsn: form.hsn.trim() || null,
         active: form.active,
         featured: form.featured,
-        variants: variants.length > 0 ? variants : [],
+        variants: variants.length > 0 ? variants.map(v => {
+          let vBasePrice = parseFloat(v.price) || 0;
+          return {
+            ...v,
+            sellerPrice: vBasePrice,
+            price: vBasePrice + (vBasePrice * commissionRate / 100)
+          };
+        }) : [],
         images: finalImages,
         updatedAt: Timestamp.now(),
         slug: form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-'),
@@ -483,8 +502,8 @@ export default function EditProduct() {
         metaDescription: form.metaDescription.trim() || form.description.substring(0, 160).trim(),
         sellerId: user.uid,
         sellerEmail: user.email,
-        status: "pending",
-        approved: false,
+        status: "approved",
+        approved: true,
         productHighlights: highlights.filter(h => h.trim()),
         specifications: specifications
           .filter(s => s.name.trim())

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiPackage, FiTag, FiImage, FiLayers, FiUploadCloud, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiChevronRight, FiInfo, FiList } from "react-icons/fi";
 import { auth, db } from "../config/firebase";
-import { collection, addDoc, Timestamp, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, Timestamp, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { uploadToS3 } from "../utils/s3Upload";
 import { motion, AnimatePresence } from "framer-motion";
@@ -347,6 +347,15 @@ export default function AddProduct() {
       // Generate SKU if not provided
       const finalSku = form.sku || `${categoryName.substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
 
+      // Fetch commission rate
+      const commissionDoc = await getDoc(doc(db, "settings", "commission"));
+      const commissionRate = commissionDoc.exists() ? Number(commissionDoc.data().percentage || 0) : 0;
+      
+      const basePrice = parseFloat(form.price) || 0;
+      const baseSalePrice = parseFloat(form.salePrice) ? parseFloat(form.salePrice) : basePrice;
+      const finalPrice = basePrice + (basePrice * commissionRate / 100);
+      const finalSalePrice = baseSalePrice + (baseSalePrice * commissionRate / 100);
+
       // Create product data
       const productData = {
         name: form.name.trim(),
@@ -359,20 +368,30 @@ export default function AddProduct() {
         subunderName,
         brand: form.brand.trim() || null,
         sku: finalSku,
-        price: parseFloat(form.price) || 0,
-        salePrice: parseFloat(form.salePrice) || 0,
+        adminCommissionPercentage: commissionRate,
+        sellerPrice: basePrice,
+        sellerSalePrice: baseSalePrice,
+        price: finalPrice,
+        salePrice: finalSalePrice,
         stock: parseInt(form.stock) || 0,
         hsn: form.hsn.trim() || null,
         active: form.active,
         featured: form.featured,
         sellerId: user.uid,
         sellerEmail: user.email,
-        variants: variants.length > 0 ? variants : [],
+        variants: variants.length > 0 ? variants.map(v => {
+          let vBasePrice = parseFloat(v.price) || 0;
+          return {
+            ...v,
+            sellerPrice: vBasePrice,
+            price: vBasePrice + (vBasePrice * commissionRate / 100)
+          };
+        }) : [],
         images: imageUrls,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        status: "pending", // For admin approval
-        approved: false,
+        status: "approved", // Automatically approved
+        approved: true,
         views: 0,
         sales: 0,
         rating: 0,
